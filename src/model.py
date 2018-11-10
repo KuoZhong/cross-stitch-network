@@ -4,6 +4,7 @@ import torchvision.models as models
 
 network_dict = {}
 
+
 def add_net(cls):
     network_dict[cls.__name__] = cls
     return cls
