@@ -12,7 +12,7 @@ def add_net(cls):
 
 @add_net
 class AlexNetFc(nn.Module):
-    def __init__(self, pretrained=True, class_name=31):
+    def __init__(self, pretrained=True):
         super(AlexNetFc, self).__init__()
         model_alexnet = models.alexnet(pretrained)
         self.features = model_alexnet.features
