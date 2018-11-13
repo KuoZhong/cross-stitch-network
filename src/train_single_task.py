@@ -63,6 +63,9 @@ cls_layer = torch.nn.Linear(feat_net.out_features, class_num)
 torch.nn.init.kaiming_normal_(cls_layer.weight.data)
 cls_layer = cls_layer.cuda()
 
+m_model = torch.nn.Sequential(feat_net,cls_layer)
+m_model.load_state_dict(torch.load(os.path.join(module_path, 'best_model.pth')))
+
 optimizer = optim.Adam([
     {'params': feat_net.parameters(), 'lr':1.0e-6},
     {'params': cls_layer.parameters(), 'lr':10.0e-6}
