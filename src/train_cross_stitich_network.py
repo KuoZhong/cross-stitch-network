@@ -46,7 +46,7 @@ model_pretrained = {
     'target': True
 }
 interval = 50
-max_iteration = 20000
+max_iteration = 100000
 
 
 cuda = not no_cuda and torch.cuda.is_available()
@@ -100,12 +100,12 @@ paramter_list = [
     {'params': m_models['target'][0].parameters(), 'lr': 1e-5},
     {'params': m_models['source'][1].parameters(), 'lr': 10e-5},
     {'params': m_models['target'][1].parameters(), 'lr': 10e-5},
-    {'params': base_cross_stitch_net.cross_stitch_units.parameters(), 'lr': 1.0e-2}
+    {'params': base_cross_stitch_net.cross_stitch_units.parameters(), 'lr': 1.0e+0}
 ]
 # for i in range(len(base_cross_stitch_net.cross_stitch_units)):
 #     paramter_list.append({'params':base_cross_stitch_net.cross_stitch_units[i].parameters()})
-optimizer = optim.Adam(paramter_list, lr=lr)
-
+# optimizer = optim.Adam(paramter_list, lr=lr)
+optimizer = optim.SGD(paramter_list, lr=lr)
 
 def test(base_cross_stitch_net, m_classifier, data_loader, is_source=True):
     base_cross_stitch_net.train(False)
@@ -141,9 +141,9 @@ def train(base_cross_stitch_net, classifiers, dataloader_train, dataloader_test,
 
     for m_iteration in range(max_iteration):
         if m_iteration % interval == 0:
-            # torch.save(base_cross_stitch_net.state_dict(), os.path.join(module_path['base'], 'last_model.pth'))
-            # for tmp in classifiers:
-            #     torch.save(classifiers[tmp].state_dict(), os.path.join(module_path[tmp], tmp + 'last_model.pth'))
+            torch.save(base_cross_stitch_net.state_dict(), os.path.join(module_path['base'], 'last_model.pth'))
+            for tmp in classifiers:
+                torch.save(classifiers[tmp].state_dict(), os.path.join(module_path[tmp], tmp + 'last_model.pth'))
             correct = {}
             for tmp in dataloader_test:
                 print(tmp)
@@ -178,7 +178,7 @@ def train(base_cross_stitch_net, classifiers, dataloader_train, dataloader_test,
         m_loss = (loss(feats1, source_labels) + loss(feats2, target_labels))/2.0
         optimizer.zero_grad()
         m_loss.backward()
-        # optimizer.step()
+        optimizer.step()
         utils_visulization.loss_plot(torch.Tensor([m_iteration]), torch.Tensor([m_loss]), name='train_loss')
 
 
