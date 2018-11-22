@@ -17,7 +17,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 # Training settings
 seed = 0
-batch_size = 64
+batch_size = 128
 num_workers = 4
 epochs = 1000
 lr = 1.0e-4
