@@ -7,15 +7,11 @@ import os
 import math
 import data_list
 from torchvision import transforms
-import torch.utils.data
-import utils_visulization
 
-
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 # Training settings
 seed = 0
-batch_size = 32
+batch_size = 128
 num_workers = 4
 epochs = 1000
 lr = 0.01
@@ -25,8 +21,8 @@ seed = 0
 pretrain = True
 log_interval = 10
 l2_decay = 5e-4
-module_path = '/home/neon/experiment/cross-stitch-network/model/amazon/' # only set here
-dataset_link_file_path = '/home/neon/dataset/office/amazon/'# only set here
+module_path = '/opt/ml/model/' # only set here
+dataset_link_file_path = './dataset_list/amazon/'# only set here
 loss = torch.nn.CrossEntropyLoss()
 device = None
 class_num = 31
@@ -118,18 +114,22 @@ if __name__ == '__main__':
     correct = 0
     for epoch in range(1, epochs + 1):
         avg_loss = train_per_epoch(feat_net, cls_layer, dataloader_train, loss, optimizer, no_cuda)
-        utils_visulization.loss_plot(torch.Tensor([epoch]), torch.Tensor([avg_loss]), name='train_loss')
+        # utils_visulization.loss_plot(torch.Tensor([epoch]), torch.Tensor([avg_loss]), name='train_loss')
+        print('epoch:{}  loss:{.3f}\n' .format(epoch, avg_loss))
 
-        print('source acc:')
+        #train-set
         t_correct_train = test(m_model, dataloader_train)
-        utils_visulization.classification_accuracy_plot(torch.Tensor([epoch]),
-                                                        torch.Tensor([100.0 * float(t_correct_train) / len_dataset_train]), \
-                                                        name='accuracy_train')
-        print('target acc:')
+        # utils_visulization.classification_accuracy_plot(torch.Tensor([epoch]),
+        #                                                 torch.Tensor([100.0 * float(t_correct_train) / len_dataset_train]), \
+        #                                                 name='accuracy_train')
+        print('train_set: epoch:{} acc:{.2f}%\n'.format(epoch, 100.0 * float(t_correct_train) / len_dataset_train))
+
+        #test-set
         t_correct = test(m_model, dataloader_test)
-        utils_visulization.classification_accuracy_plot(torch.Tensor([epoch]),
-                                                        torch.Tensor([100.0 * float(t_correct) / len_dataset_test]), \
-                                                        name='accuracy_test')
+        # utils_visulization.classification_accuracy_plot(torch.Tensor([epoch]),
+        #                                                 torch.Tensor([100.0 * float(t_correct) / len_dataset_test]), \
+        #                                                 name='accuracy_test')
+        print('test_set: epoch:{} acc:{.2f}%\n'.format(epoch, 100.0 * float(t_correct) / len_dataset_test))
 
         if t_correct > correct:
             correct = t_correct

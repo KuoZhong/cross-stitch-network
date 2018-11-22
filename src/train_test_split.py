@@ -55,6 +55,6 @@ def train_test_split(img_path, link_file_path, portion=70):
     f_train.close()
     f_test.close()
 
-test_path = '/home/neon/dataset/office/webcam/images'
-link_path = '/home/neon/dataset/office/webcam/'
+test_path = r'C:\Users\austinzhong\Downloads\office\webcam\images'
+link_path = r'C:\Users\austinzhong\Downloads\office\webcam'
 train_test_split(test_path, link_file_path=link_path, portion=80)

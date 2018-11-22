@@ -17,7 +17,8 @@ __all__ = ['AlexNet', 'alexnet']
 
 
 model_urls = {
-    'alexnet': 'https://download.pytorch.org/models/alexnet-owt-4df8aa71.pth',
+    # 'alexnet': 'https://download.pytorch.org/models/alexnet-owt-4df8aa71.pth',
+    'alexnet': '/opt/ml/disk/pretrained_models/alexnet.pth'
 }
 
 
@@ -65,7 +66,8 @@ def alexnet(pretrained=False, **kwargs):
     """
     model = AlexNet(**kwargs)
     if pretrained:
-        model.load_state_dict(model_zoo.load_url(model_urls['alexnet']))
+        # model.load_state_dict(model_zoo.load_url(model_urls['alexnet']))
+        model.load_state_dict(torch.load(model_urls['alexnet']))
     return model
 
 
