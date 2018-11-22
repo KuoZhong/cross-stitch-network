@@ -7,5 +7,21 @@ container:
         nvidia.com/gpu: 2
 
     env:
+    - name: EPOCHS
+      value: 120000
+    - name: BATCH_SIZE
+      value: 128
+    - name: ALPHA_SHARE
+      value: 0.9
+    - name: PRETRAINED
+      value: 0
+    - name: FROM_SCRATCH
+      value: 1
+    - name: CROSS_UNIT_LR
+      value: 1e-1
+    - name: TARGET
+      value: amazon
+    - name: SOURCE
+      value: webcam
     - name: SEVEN_MODEL_RESERVE_DAYS
       value: 3

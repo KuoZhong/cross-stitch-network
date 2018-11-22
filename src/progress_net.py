@@ -1,8 +1,9 @@
 import torch
 import torch.nn as nn
 import model
+import os
 
-_alpha_keep = 0.90
+_alpha_keep = float(os.environ['ALPHA_SHARE'])
 _cross_stitch_unit = [[1.0 - _alpha_keep, _alpha_keep],
                       ]
 

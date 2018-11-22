@@ -12,43 +12,42 @@ import torch.utils.data
 import utils_visulization
 import progress_net
 
-
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
-
 # Training settings
 seed = 0
-batch_size = 64
+batch_size = int(os.environ['BATCH_SIZE'])
 num_workers = 4
-epochs = 1000
+#epochs = 1000
 lr = 1.0e-4
 momentum = 0.9
 no_cuda =False
 seed = 0
-pretrain = True
 log_interval = 10
 l2_decay = 5e-4
-module_path = {
-    'source': '/home/neon/experiment/cross-stitch-network/model/webcam/',
-    'target': '/home/neon/experiment/cross-stitch-network/model/amazon/',
-    'base': '/home/neon/experiment/cross-stitch-network/model/progress/'
+save_module_path = {
+    'source': '/opt/ml/model/',
+    'target': '/opt/ml/model/',
+    'base': '/opt/ml/model/'
 }  # only set here
 dataset_link_file_path = {
-    'source': '/home/neon/dataset/office/webcam/',
-    'target': '/home/neon/dataset/office/amazon/'
+    'source': os.path.join('./dataset_list/', os.environ['SOURCE']),
+    'target': os.path.join('./dataset_list/', os.environ['TARGET'])
 }  # only set here
+cloud_module_path = {
+    'source': os.path.join('/opt/ml/disk/model/alexnet', os.environ['SOURCE']),
+    'target': os.path.join('/opt/ml/disk/model/alexnet', os.environ['TARGET']),
+    'base': '/opt/ml/disk/model/progress_back'
+}
 loss = torch.nn.CrossEntropyLoss()
 device = None
 class_num = 31
 save_best_model = True
 drop_last = True
-model_pretrained = {
-    'source': True,
-    'target': True
-}
 interval = 50
-max_iteration = 120000
-load_pretrained_model = True
-save_model = False
+max_iteration = int(os.environ['EPOCHS'])
+load_pretrained_model = bool(int(os.environ['PRETRAINED']))
+save_model = True
+cross_unit_lr = float(os.environ['CROSS_UNIT_LR'])
+from_scratch = bool(int(os.environ['FROM_SCRATCH']))
 
 cuda = not no_cuda and torch.cuda.is_available()
 
@@ -79,26 +78,24 @@ dataloader_test = {tmp: torch.utils.data.DataLoader(dataset_test[tmp], batch_siz
 len_dataset_train = {tmp: len(dataset_train[tmp]) for tmp in dataset_train}
 len_dataset_test = {tmp: len(dataset_test[tmp]) for tmp in dataset_test}
 
-
 class_num = 31
 
 #model
 m_models = {tmp:model.network_dict['AlexNetFc'](True) for tmp in dataset_train}
 m_models = {tmp:nn.Sequential(m_models[tmp], nn.Linear(m_models[tmp].out_features, class_num)) for tmp in dataset_train}
-# load pretrained parameters
-# for tmp in m_models:
-#     m_models[tmp].load_state_dict(torch.load(os.path.join(module_path[tmp], 'best_model.pth')))
-# m_models['source'].load_state_dict(torch.load(os.path.join(module_path['source'], 'best_model.pth')))
-torch.nn.init.kaiming_normal_(m_models['target'][1].weight.data)
-m_models['target'][1].bias.data.fill_(0)
+if from_scratch:
+    torch.nn.init.kaiming_normal_(m_models['target'][1].weight.data)
+    m_models['target'][1].bias.data.fill_(0)
+else:
+    m_models['target'].load_state_dict(torch.load(os.path.join(module_path['target'], 'best_model.pth')))
 
 base_progress_net = progress_net.ProgressNetwork(m_models['source'][0], m_models['target'][0])
 classifiers = {tmp: m_models[tmp][1] for tmp in m_models}
 if load_pretrained_model:
-    base_progress_net.load_state_dict(torch.load(os.path.join(module_path['base'], 'imgnet_scratch_last_model.pth')))
+    base_progress_net.load_state_dict(torch.load(os.path.join(cloud_module_path['base'], 'last_model.pth')))
     for tmp in classifiers:
         print(classifiers[tmp])
-        classifiers[tmp].load_state_dict(torch.load(os.path.join(module_path[tmp], 'imgnet_scratch_progress_' + tmp + 'last_model.pth')))
+        classifiers[tmp].load_state_dict(torch.load(os.path.join(cloud_module_path[tmp], 'imgnet_scratch_progress_' + tmp + 'last_model.pth')))
 
 if cuda:
     m_models = {tmp: m_models[tmp].cuda() for tmp in m_models}
@@ -107,15 +104,15 @@ if cuda:
 
 paramter_list = [
     # {'params': m_models['source'][0].parameters(), 'lr':1e-5},
-    {'params': m_models['target'][0].parameters(), 'lr': 1e-5},
+    {'params': m_models['target'][0].parameters(), 'lr': 1.0e-6},
     # {'params': m_models['source'][1].parameters(), 'lr': 10e-5},
-    {'params': m_models['target'][1].parameters(), 'lr': 10e-5},
-    {'params': base_progress_net.progress_units.parameters(), 'lr': 0.5e-1}
+    {'params': m_models['target'][1].parameters(), 'lr': 10e-6},
+    {'params': base_progress_net.progress_units.parameters(), 'lr': cross_unit_lr}
 ]
 # for i in range(len(base_cross_stitch_net.cross_stitch_units)):
 #     paramter_list.append({'params':base_cross_stitch_net.cross_stitch_units[i].parameters()})
 # optimizer = optim.Adam(paramter_list, lr=lr)
-optimizer = optim.SGD(paramter_list, lr=lr)
+optimizer = optim.Adam(paramter_list, lr=lr)
 
 def test(base_progrese_net, m_classifier, data_loader, is_source=True):
     base_progress_net.train(False)
