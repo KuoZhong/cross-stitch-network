@@ -132,7 +132,7 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/train_progessive_net.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="431">
+            <state relative-caret-position="500">
               <caret line="31" column="73" lean-forward="true" selection-start-line="31" selection-start-column="73" selection-end-line="31" selection-end-column="73" />
               <folding>
                 <element signature="e#0#12#0" expanded="true" />
@@ -642,7 +642,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/train_progessive_net.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="431">
+        <state relative-caret-position="500">
           <caret line="31" column="73" lean-forward="true" selection-start-line="31" selection-start-column="73" selection-end-line="31" selection-end-column="73" />
           <folding>
             <element signature="e#0#12#0" expanded="true" />
