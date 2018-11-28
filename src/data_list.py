@@ -2,7 +2,7 @@
 
 import torch
 import numpy as np
-from sklearn.preprocessing import StandardScaler
+#from sklearn.preprocessing import StandardScaler
 from torch.utils.data import Dataset
 import random
 from PIL import Image
@@ -188,6 +188,23 @@ class ImageList(Dataset):
 
     def __len__(self):
         return len(self.imgs)
+
+class ImageListWithFilePath(ImageList):
+    def __getitem__(self, index):
+        """
+        Args:
+            index (int): Index
+        Returns:
+            tuple: (image, target) where target is class_index of the target class.
+        """
+        path, target = self.imgs[index]
+        img = self.loader(path)
+        if self.transform is not None:
+            img = self.transform(img)
+        if self.target_transform is not None:
+            target = self.target_transform(target)
+
+        return img, target, path
 
 
 class CatImageList(Dataset):

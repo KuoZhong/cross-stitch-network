@@ -45,6 +45,7 @@ max_iteration = int(os.environ['EPOCHS'])
 load_pretrained_model = bool(int(os.environ['PRETRAINED']))
 save_model = True
 cross_unit_lr = float(os.environ['CROSS_UNIT_LR'])
+back_lr = float(os.environ['BACK_LR'])
 from_scratch = bool(int(os.environ['FROM_SCRATCH']))
 
 cuda = not no_cuda and torch.cuda.is_available()
@@ -104,9 +105,9 @@ if cuda:
 
 paramter_list = [
     # {'params': m_models['source'][0].parameters(), 'lr':1e-5},
-    {'params': m_models['target'][0].parameters(), 'lr': 1.0e-6},
-    # {'params': m_models['source'][1].parameters(), 'lr': 10e-5},
-    {'params': m_models['target'][1].parameters(), 'lr': 10e-6},
+    {'params': m_models['target'][0].parameters(), 'lr': back_lr},
+    # {'params': m_models['source'][1].parameters(), 'lr': 10.0 * back_lr},
+    {'params': m_models['target'][1].parameters(), 'lr': 10.0 * back_lr},
     {'params': base_progress_net.progress_units.parameters(), 'lr': cross_unit_lr}
 ]
 # for i in range(len(base_cross_stitch_net.cross_stitch_units)):
@@ -190,10 +191,11 @@ def train(base_progress_net, classifiers, dataloader_train, dataloader_test, max
         # print(m_iteration)
         # source_imgs, source_labels = iter_train['source'].next()
         target_imgs, target_labels = iter_train['target'].next()
+        imgs = target_imgs
         # imgs = torch.cat([source_imgs, target_imgs], dim=0)
         if cuda:
             imgs = imgs.cuda()
-            source_labels,target_labels = source_labels.cuda(), target_labels.cuda()
+            target_labels = target_labels.cuda()
         feats1, feats2 = base_progress_net(imgs)
         # feats1 = torch.narrow(feats1, 0, 0, feats1.size(0)//2)
         # feats2 = torch.narrow(feats2, 0, feats2.size(0)//2, feats2.size(0)//2)

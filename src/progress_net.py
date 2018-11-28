@@ -4,6 +4,8 @@ import model
 import os
 
 _alpha_keep = float(os.environ['ALPHA_SHARE'])
+_param_num = int(os.environ['NUM_UNIT_PARAM'])
+_skip_last = int(os.environ['SKIP_LAST'])
 _cross_stitch_unit = [[1.0 - _alpha_keep, _alpha_keep],
                       ]
 
@@ -13,34 +15,42 @@ class ProgressUnit(nn.Module):
     def __init__(self, size):# size is the input size
         super(ProgressUnit,self).__init__()
         assert len(size)==4 or len(size)==2
-        if len(size) == 4:
-            self.progress_unit = nn.Parameter(torch.Tensor([_cross_stitch_unit for i in range(size[1])]))
-            # self.cross_stitch_units.requires_grad_()
-        elif len(size) == 2:
-            self.progress_unit = nn.Parameter(torch.Tensor([_cross_stitch_unit for i in range(1)]))
-            # self.cross_stitch_units.requires_grad_()
+        assert _param_num==1 or _param_num==2
+        if _param_num == 2:
+            if len(size) == 4:
+                self.progress_unit = nn.Parameter(torch.Tensor([_cross_stitch_unit for i in range(size[1])]))
+            elif len(size) == 2:
+                self.progress_unit = nn.Parameter(torch.Tensor([_cross_stitch_unit for i in range(1)]))
+        elif _param_num == 1:
+            if len(size) == 4:
+                self.progress_unit = nn.Parameter(torch.Tensor([_alpha_keep for i in range(size[1])]).view(-1, 1))
+            elif len(size) == 2:
+                self.progress_unit = nn.Parameter(torch.Tensor([_alpha_keep for i in range(1)]).view(-1, 1))
 
     def forward(self, input1, input2):
         assert input1.dim() == input2.dim() #share information only when input1 and input2 have the same shape
         output2 = None
+        tmp_unit = self.progress_unit
+        if _param_num == 1:
+            tmp_unit = torch.Tensor([1.0]).cuda() - self.progress_unit
+            tmp_unit = torch.cat((tmp_unit, self.progress_unit), dim=1)
+            tmp_unit = torch.unsqueeze(tmp_unit, 1)
+            tmp_unit = torch.unsqueeze(tmp_unit, 0)
+
         if input1.dim() == 4: #n*c*w*h, output after conv net
             input_size = input1.size()
             input1 = input1.view(input1.size(0), input1.size(1), 1, -1)
             input2 = input2.view(input1.size(0), input1.size(1), 1, -1)
             input_total = torch.cat((input1, input2), dim=2)
-            # if self.cross_stitch_units is None:
-            #     self.cross_stitch_units = torch.Tensor([_cross_stitch_unit for i in range(input1.size(1))])
-            #     self.cross_stitch_units.requires_grad_()
-            output_total = torch.matmul(self.progress_unit, input_total)
+            # output_total = torch.matmul(self.progress_unit, input_total)
+            output_total = torch.matmul(tmp_unit, input_total)
             output2 = output_total.view(input_size)
         elif input1.dim() == 2: #n*h, output after fc net
             input1 = input1.view(input1.size(0),  1, -1)
             input2 = input2.view(input1.size(0),  1, -1)
             input_total = torch.cat((input1, input2), dim=1)
-            # if self.cross_stitch_units is None:
-            #     self.cross_stitch_units = torch.Tensor(_cross_stitch_unit)
-            #     self.cross_stitch_units.requires_grad_()
-            output_total = torch.matmul(self.progress_unit, input_total)
+            # output_total = torch.matmul(self.progress_unit, input_total)
+            output_total = torch.matmul(tmp_unit, input_total)
             output2 = output_total.squeeze()
         return output2
 
@@ -88,6 +98,8 @@ class ProgressNetwork(nn.Module):
         for (m1, m2) in zip(self.source_architecture.classfier.children(),self.target_architecture.classfier.children()):
             x1, x2 = m1(x1), m2(x2)
             if isinstance(m1, (nn.MaxPool2d, nn.Linear)):
+                if _skip_last == 1 and progress_unit_idx == len(self.progress_units)-1:
+                    continue
                 x2 = self.progress_units[progress_unit_idx](x1, x2)
                 progress_unit_idx += 1
         return x1, x2

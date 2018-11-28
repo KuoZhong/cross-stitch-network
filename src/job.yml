@@ -4,11 +4,11 @@ jobname: amazon_single_test
 container:
     image: docker.oa.com/g_tfplus/pytorch:pytorch0.4.0-python3.6-cuda9-cudnn7.0.4.3-ubuntu16.04-hadoop-2.7.5-java8
     resources:
-        nvidia.com/gpu: 2
+        nvidia.com/gpu: 1
 
     env:
     - name: EPOCHS
-      value: 120000
+      value: 100000
     - name: BATCH_SIZE
       value: 128
     - name: ALPHA_SHARE
@@ -18,10 +18,16 @@ container:
     - name: FROM_SCRATCH
       value: 1
     - name: CROSS_UNIT_LR
-      value: 1e-1
+      value: 1e-2
+    - name: BACK_LR
+      value: 1e-6
     - name: TARGET
       value: amazon
     - name: SOURCE
       value: webcam
+    - name: LOG_INTERVAL
+      value: 50
+    - name: NUM_UNIT_PARAM
+      value: 2
     - name: SEVEN_MODEL_RESERVE_DAYS
       value: 3
